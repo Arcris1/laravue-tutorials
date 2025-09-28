@@ -1,5 +1,10 @@
-<script setup></script>
+<script setup>
+import LogoutModal from './components/modals/LogoutModal.vue'
+</script>
 
 <template>
-    <RouterView />
+    <div>
+        <RouterView />
+        <LogoutModal />
+    </div>
 </template>

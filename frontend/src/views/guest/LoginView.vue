@@ -2,11 +2,10 @@
 import { onMounted, ref } from 'vue'
 import { toast } from 'vue3-toastify'
 import { useRouter } from 'vue-router'
-
-import { loginUser } from '@/services/auth'
-import { setAuthToken } from '@/config/axiosConfig'
+import { useUserStore } from '@/stores/userStore'
 
 const router = useRouter()
+const userStore = useUserStore()
 
 const email = ref()
 const password = ref()
@@ -15,12 +14,10 @@ const isLoading = ref(false)
 const handleLogin = async () => {
     isLoading.value = true
     try {
-        const response = await loginUser({
+        const response = await userStore.login({
             email: email.value,
             password: password.value,
         })
-
-        setAuthToken(response.data?.token)
 
         toast('Login successful! Redirecting...', {
             autoClose: 1000,

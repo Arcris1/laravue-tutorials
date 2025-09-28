@@ -1,7 +1,16 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { fetchTasks, createTask, updateTask, deleteTask } from '@/services/task'
 import { toast } from 'vue3-toastify'
+import { useModalStore } from '@/stores/modalStore'
+
+import NavHeader from '@/layouts/NavHeader.vue'
+import DeleteModal from '@/components/modals/DeleteModal.vue'
+
+const modalStore = useModalStore()
+
+const { isDeleteSuccessfull } = storeToRefs(modalStore)
 
 const tasks = ref()
 const task = ref()
@@ -62,34 +71,6 @@ const handleAddTask = async () => {
     }
 }
 
-const handleDelete = async (taskId) => {
-    console.log(taskId)
-
-    try {
-        const response = await deleteTask(taskId)
-
-        if (response.status === 200) {
-            toast(response.data.message, {
-                autoClose: 1000,
-            })
-
-            // Refresh the task list
-            handleFetchTasks()
-        }
-    } catch (error) {
-        console.log(error)
-        if (error.response?.data?.message) {
-            toast(error.response.data.message, {
-                autoClose: 1000,
-            })
-        } else {
-            toast('There is a problem adding the task, please try again later', {
-                autoClose: 1000,
-            })
-        }
-    }
-}
-
 const handleTaskUpdate = async (taskId, isDone) => {
     try {
         const response = await updateTask({
@@ -112,6 +93,13 @@ const handleTaskUpdate = async (taskId, isDone) => {
     }
 }
 
+watch(isDeleteSuccessfull, async (newVal, OldVal) => {
+    if (newVal) {
+        await handleFetchTasks()
+        modalStore.isDeleteSuccessfull = false
+    }
+})
+
 onMounted(() => {
     handleFetchTasks()
 })
@@ -120,24 +108,7 @@ onMounted(() => {
 <template>
     <div class="bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 min-h-screen font-sans">
         <!-- 🌸 Navbar -->
-        <nav
-            class="bg-white/80 backdrop-blur-lg border-b-4 border-pink-200 shadow-md px-6 py-3 flex justify-between items-center rounded-b-2xl"
-        >
-            <!-- Left: Logo -->
-            <div class="text-2xl font-extrabold text-pink-500 drop-shadow-sm">🎀 KawaiiApp</div>
-
-            <!-- Right: User + Logout -->
-            <div class="flex items-center gap-4">
-                <span class="text-gray-700 font-medium">
-                    Hi, <span class="text-pink-500 font-bold">Cris 🐰</span>
-                </span>
-                <button
-                    class="px-4 py-2 bg-pink-400 text-white rounded-full shadow-md hover:bg-pink-500 transition font-semibold text-sm"
-                >
-                    🚪 Logout
-                </button>
-            </div>
-        </nav>
+        <NavHeader />
 
         <!-- 🌸 Main Content -->
         <div class="p-6 flex flex-col items-center">
@@ -195,7 +166,7 @@ onMounted(() => {
                             >
                         </div>
                         <button
-                            @click="handleDelete(task.id)"
+                            @click="modalStore.deleteId(task.id)"
                             class="text-pink-500 hover:text-red-500 transition text-xl"
                         >
                             💔
@@ -204,5 +175,7 @@ onMounted(() => {
                 </ul>
             </div>
         </div>
+
+        <DeleteModal />
     </div>
 </template>
